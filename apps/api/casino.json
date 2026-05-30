@@ -1,0 +1,736 @@
+{
+  "updatedAt": "2026-04-14",
+  "slot": [
+    {
+      "id": "pragmatic_slot",
+      "category": "slot",
+      "name": "프라그마틱",
+      "shortName": "프라그마틱",
+      "vendor": "pragmatic_slot",
+      "route": "/lobby/slots?vendor=pragmatic_slot",
+      "logo": "/logo/logo_Pragmatic.png"
+    },
+    {
+      "id": "MICRO_Slot",
+      "category": "slot",
+      "name": "마이크로",
+      "shortName": "마이크로",
+      "vendor": "MICRO_Slot",
+      "route": "/lobby/slots?vendor=MICRO_Slot",
+      "logo": "/logo/logo_MicroGaming.png"
+    },
+    {
+      "id": "TOMHORN_SLOT",
+      "category": "slot",
+      "name": "톰혼",
+      "shortName": "톰혼",
+      "vendor": "TOMHORN_SLOT",
+      "route": "/lobby/slots?vendor=TOMHORN_SLOT"
+    },
+    {
+      "id": "habanero",
+      "category": "slot",
+      "name": "하바네로",
+      "shortName": "하바네로",
+      "vendor": "habanero",
+      "route": "/lobby/slots?vendor=habanero"
+    },
+    {
+      "id": "booongo",
+      "category": "slot",
+      "name": "부운고",
+      "shortName": "부운고",
+      "vendor": "booongo",
+      "route": "/lobby/slots?vendor=booongo"
+    },
+    {
+      "id": "cq9",
+      "category": "slot",
+      "name": "CQ9",
+      "shortName": "CQ9",
+      "vendor": "cq9",
+      "route": "/lobby/slots?vendor=cq9"
+    },
+    {
+      "id": "netent",
+      "category": "slot",
+      "name": "넷엔트",
+      "shortName": "넷엔트",
+      "vendor": "netent",
+      "route": "/lobby/slots?vendor=netent"
+    },
+    {
+      "id": "nlc",
+      "category": "slot",
+      "name": "노리밋 시티",
+      "shortName": "노리밋 시티",
+      "vendor": "nlc",
+      "route": "/lobby/slots?vendor=nlc"
+    },
+    {
+      "id": "redtiger",
+      "category": "slot",
+      "name": "레드타이거",
+      "shortName": "레드타이거",
+      "vendor": "redtiger",
+      "route": "/lobby/slots?vendor=redtiger"
+    },
+    {
+      "id": "btg",
+      "category": "slot",
+      "name": "빅타임 게이밍",
+      "shortName": "빅타임",
+      "vendor": "btg",
+      "route": "/lobby/slots?vendor=btg"
+    },
+    {
+      "id": "fc_slot",
+      "category": "slot",
+      "name": "FC",
+      "shortName": "FC",
+      "vendor": "fc_slot",
+      "route": "/lobby/slots?vendor=fc_slot"
+    },
+    {
+      "id": "hacksaw_slot",
+      "category": "slot",
+      "name": "핵소",
+      "shortName": "핵소",
+      "vendor": "hacksaw_slot",
+      "route": "/lobby/slots?vendor=hacksaw_slot"
+    },
+    {
+      "id": "jdb",
+      "category": "slot",
+      "name": "JDB",
+      "shortName": "JDB",
+      "vendor": "jdb",
+      "route": "/lobby/slots?vendor=jdb"
+    },
+    {
+      "id": "jili",
+      "category": "slot",
+      "name": "질리",
+      "shortName": "질리",
+      "vendor": "jili",
+      "route": "/lobby/slots?vendor=jili"
+    },
+    {
+      "id": "pgsoft",
+      "category": "slot",
+      "name": "PG소프트",
+      "shortName": "PG소프트",
+      "vendor": "pgsoft",
+      "route": "/lobby/slots?vendor=pgsoft"
+    },
+    {
+      "id": "PLAYNGO",
+      "category": "slot",
+      "name": "플레이앤고",
+      "shortName": "플레이앤고",
+      "vendor": "PLAYNGO",
+      "route": "/lobby/slots?vendor=PLAYNGO"
+    },
+    {
+      "id": "kingmaker",
+      "category": "slot",
+      "name": "킹메이커",
+      "shortName": "킹메이커",
+      "vendor": "kingmaker",
+      "route": "/lobby/slots?vendor=kingmaker"
+    },
+    {
+      "id": "onetouch",
+      "category": "slot",
+      "name": "원터치",
+      "shortName": "원터치",
+      "vendor": "onetouch",
+      "route": "/lobby/slots?vendor=onetouch"
+    },
+    {
+      "id": "xin",
+      "category": "slot",
+      "name": "신",
+      "shortName": "신",
+      "vendor": "xin",
+      "route": "/lobby/slots?vendor=xin"
+    },
+    {
+      "id": "slotmil",
+      "category": "slot",
+      "name": "슬롯밀",
+      "shortName": "슬롯밀",
+      "vendor": "slotmil",
+      "route": "/lobby/slots?vendor=slotmil"
+    },
+    {
+      "id": "playtech_slot",
+      "category": "slot",
+      "name": "플레이텍 슬롯",
+      "shortName": "플레이텍",
+      "vendor": "playtech_slot",
+      "route": "/lobby/slots?vendor=playtech_slot"
+    },
+    {
+      "id": "gtf",
+      "category": "slot",
+      "name": "GTF",
+      "shortName": "GTF",
+      "vendor": "gtf",
+      "route": "/lobby/slots?vendor=gtf"
+    },
+    {
+      "id": "advantplay",
+      "category": "slot",
+      "name": "어드밴트플레이",
+      "shortName": "어드밴트플레이",
+      "vendor": "advantplay",
+      "route": "/lobby/slots?vendor=advantplay"
+    },
+    {
+      "id": "askmeslot",
+      "category": "slot",
+      "name": "아스크미슬롯",
+      "shortName": "아스크미슬롯",
+      "vendor": "askmeslot",
+      "route": "/lobby/slots?vendor=askmeslot"
+    },
+    {
+      "id": "bgaming",
+      "category": "slot",
+      "name": "비게이밍",
+      "shortName": "비게이밍",
+      "vendor": "bgaming",
+      "route": "/lobby/slots?vendor=bgaming"
+    },
+    {
+      "id": "gpk7mj",
+      "category": "slot",
+      "name": "7Mojos",
+      "shortName": "7Mojos",
+      "vendor": "gpk7mj",
+      "route": "/lobby/slots?vendor=gpk7mj"
+    },
+    {
+      "id": "booming",
+      "category": "slot",
+      "name": "부밍",
+      "shortName": "부밍",
+      "vendor": "booming",
+      "route": "/lobby/slots?vendor=booming"
+    },
+    {
+      "id": "spinomenal",
+      "category": "slot",
+      "name": "스핀오메날",
+      "shortName": "스핀오메날",
+      "vendor": "spinomenal",
+      "route": "/lobby/slots?vendor=spinomenal"
+    },
+    {
+      "id": "dbgame",
+      "category": "slot",
+      "name": "DB게임",
+      "shortName": "DB게임",
+      "vendor": "dbgame",
+      "route": "/lobby/slots?vendor=dbgame"
+    },
+    {
+      "id": "live22",
+      "category": "slot",
+      "name": "라이브22",
+      "shortName": "라이브22",
+      "vendor": "live22",
+      "route": "/lobby/slots?vendor=live22"
+    },
+    {
+      "id": "cg",
+      "category": "slot",
+      "name": "CG",
+      "shortName": "CG",
+      "vendor": "cg",
+      "route": "/lobby/slots?vendor=cg"
+    },
+    {
+      "id": "thunderkick",
+      "category": "slot",
+      "name": "썬더킥",
+      "shortName": "썬더킥",
+      "vendor": "thunderkick",
+      "route": "/lobby/slots?vendor=thunderkick"
+    }
+  ],
+  "casino": [
+    {
+      "id": "pragmatic_casino",
+      "category": "casino",
+      "name": "프라그마틱",
+      "shortName": "프라그마틱",
+      "vendor": "pragmatic_casino",
+      "route": "/lobby/live-casino?vendor=pragmatic_casino",
+      "logo": "/logo/logo_Pragmatic.png"
+    },
+    {
+      "id": "MICRO_Casino",
+      "category": "casino",
+      "name": "마이크로",
+      "shortName": "마이크로",
+      "vendor": "MICRO_Casino",
+      "route": "/lobby/live-casino?vendor=MICRO_Casino",
+      "logo": "/logo/logo_MicroGaming.png"
+    },
+    {
+      "id": "evolution",
+      "category": "casino",
+      "name": "에볼루션",
+      "shortName": "에볼루션",
+      "vendor": "evolution",
+      "route": "/lobby/live-casino?vendor=evolution",
+      "logo": "/logo/logo_Evolution.png",
+      "headline": "에볼루션은 현재 미계약 상태라서 노출만 유지하고 입장은 막아둡니다.",
+      "description": "계약 전 상태라서 회사명과 라인업은 보이지만 입장은 준비중으로 표시됩니다.",
+      "status": "paused"
+    },
+    {
+      "id": "cq9_casino",
+      "category": "casino",
+      "name": "CQ9",
+      "shortName": "CQ9",
+      "vendor": "cq9_casino",
+      "route": "/lobby/live-casino?vendor=cq9_casino"
+    },
+    {
+      "id": "dowin",
+      "category": "casino",
+      "name": "두윈",
+      "shortName": "두윈",
+      "vendor": "dowin",
+      "route": "/lobby/live-casino?vendor=dowin"
+    },
+    {
+      "id": "dream",
+      "category": "casino",
+      "name": "드림게임",
+      "shortName": "드림",
+      "vendor": "dream",
+      "route": "/lobby/live-casino?vendor=dream",
+      "logo": "/logo/logo_Dreamgame.png",
+      "headline": "드림게임은 썸네일 사진 없이 카드형 진입 UI로만 정리합니다.",
+      "description": "현재는 여성 썸네일을 쓰지 않고, 회사 전체 입장 카드와 fallback 게임 카드 위주로 구성합니다.",
+      "entryStyle": "card"
+    },
+    {
+      "id": "oriental",
+      "category": "casino",
+      "name": "오리엔탈",
+      "shortName": "오리엔탈",
+      "vendor": "oriental",
+      "route": "/lobby/live-casino?vendor=oriental"
+    },
+    {
+      "id": "sa",
+      "category": "casino",
+      "name": "SA",
+      "shortName": "SA",
+      "vendor": "sa",
+      "route": "/lobby/live-casino?vendor=sa"
+    },
+    {
+      "id": "TOMHORN_7Mojos",
+      "category": "casino",
+      "name": "톰혼 7Mojos",
+      "shortName": "7Mojos",
+      "vendor": "TOMHORN_7Mojos",
+      "route": "/lobby/live-casino?vendor=TOMHORN_7Mojos"
+    },
+    {
+      "id": "TOMHORN_AbsoluteLive",
+      "category": "casino",
+      "name": "톰혼 Absolute Live",
+      "shortName": "Absolute Live",
+      "vendor": "TOMHORN_AbsoluteLive",
+      "route": "/lobby/live-casino?vendor=TOMHORN_AbsoluteLive"
+    },
+    {
+      "id": "TOMHORN_VIVO",
+      "category": "casino",
+      "name": "VIVO",
+      "shortName": "VIVO",
+      "vendor": "TOMHORN_VIVO",
+      "route": "/lobby/live-casino?vendor=TOMHORN_VIVO"
+    },
+    {
+      "id": "VOTA",
+      "category": "casino",
+      "name": "보타",
+      "shortName": "보타",
+      "vendor": "VOTA",
+      "route": "/lobby/live-casino?vendor=VOTA"
+    },
+    {
+      "id": "allbet",
+      "category": "casino",
+      "name": "올벳",
+      "shortName": "올벳",
+      "vendor": "allbet",
+      "route": "/lobby/live-casino?vendor=allbet"
+    },
+    {
+      "id": "ezugi",
+      "category": "casino",
+      "name": "에주기",
+      "shortName": "에주기",
+      "vendor": "ezugi",
+      "route": "/lobby/live-casino?vendor=ezugi"
+    },
+    {
+      "id": "idnlive",
+      "category": "casino",
+      "name": "아이디엔",
+      "shortName": "아이디엔",
+      "vendor": "idnlive",
+      "route": "/lobby/live-casino?vendor=idnlive"
+    },
+    {
+      "id": "iconic21",
+      "category": "casino",
+      "name": "아이코닉21",
+      "shortName": "아이코닉21",
+      "vendor": "iconic21",
+      "route": "/lobby/live-casino?vendor=iconic21"
+    },
+    {
+      "id": "playtech",
+      "category": "casino",
+      "name": "플레이텍",
+      "shortName": "플레이텍",
+      "vendor": "playtech",
+      "route": "/lobby/live-casino?vendor=playtech"
+    },
+    {
+      "id": "winfinity",
+      "category": "casino",
+      "name": "윈피니티",
+      "shortName": "윈피니티",
+      "vendor": "winfinity",
+      "route": "/lobby/live-casino?vendor=winfinity"
+    },
+    {
+      "id": "wm",
+      "category": "casino",
+      "name": "WM",
+      "shortName": "WM",
+      "vendor": "wm",
+      "route": "/lobby/live-casino?vendor=wm",
+      "logo": "/logo/logo_Wm.png"
+    }
+  ],
+  "arcade": [
+    {
+      "id": "hacksaw_arcade",
+      "category": "arcade",
+      "name": "핵소",
+      "shortName": "핵소",
+      "vendor": "hacksaw_arcade",
+      "route": "/lobby/minigame?vendor=hacksaw_arcade"
+    },
+    {
+      "id": "fc_arcade",
+      "category": "arcade",
+      "name": "FC",
+      "shortName": "FC",
+      "vendor": "fc_arcade",
+      "route": "/lobby/minigame?vendor=fc_arcade"
+    },
+    {
+      "id": "jdb_arcade",
+      "category": "arcade",
+      "name": "JDB",
+      "shortName": "JDB",
+      "vendor": "jdb_arcade",
+      "route": "/lobby/minigame?vendor=jdb_arcade"
+    },
+    {
+      "id": "jili_arcade",
+      "category": "arcade",
+      "name": "질리",
+      "shortName": "질리",
+      "vendor": "jili_arcade",
+      "route": "/lobby/minigame?vendor=jili_arcade"
+    },
+    {
+      "id": "5GG",
+      "category": "arcade",
+      "name": "5GG",
+      "shortName": "5GG",
+      "vendor": "5GG",
+      "route": "/lobby/minigame?vendor=5GG"
+    },
+    {
+      "id": "amigo",
+      "category": "arcade",
+      "name": "아미고",
+      "shortName": "아미고",
+      "vendor": "amigo",
+      "route": "/lobby/minigame?vendor=amigo"
+    },
+    {
+      "id": "aspect",
+      "category": "arcade",
+      "name": "아스펙트",
+      "shortName": "아스펙트",
+      "vendor": "aspect",
+      "route": "/lobby/minigame?vendor=aspect"
+    },
+    {
+      "id": "bigpot",
+      "category": "arcade",
+      "name": "빅팟",
+      "shortName": "빅팟",
+      "vendor": "bigpot",
+      "route": "/lobby/minigame?vendor=bigpot"
+    },
+    {
+      "id": "gambitstudio",
+      "category": "arcade",
+      "name": "갬빗 스튜디오",
+      "shortName": "갬빗",
+      "vendor": "gambitstudio",
+      "route": "/lobby/minigame?vendor=gambitstudio"
+    },
+    {
+      "id": "octoplay",
+      "category": "arcade",
+      "name": "옥토플레이",
+      "shortName": "옥토플레이",
+      "vendor": "octoplay",
+      "route": "/lobby/minigame?vendor=octoplay"
+    },
+    {
+      "id": "relaxgaming",
+      "category": "arcade",
+      "name": "릴랙스 게이밍",
+      "shortName": "릴랙스",
+      "vendor": "relaxgaming",
+      "route": "/lobby/minigame?vendor=relaxgaming"
+    },
+    {
+      "id": "wazdan",
+      "category": "arcade",
+      "name": "와즈단",
+      "shortName": "와즈단",
+      "vendor": "wazdan",
+      "route": "/lobby/minigame?vendor=wazdan"
+    },
+    {
+      "id": "winspinity",
+      "category": "arcade",
+      "name": "윈스피니티",
+      "shortName": "윈스피니티",
+      "vendor": "winspinity",
+      "route": "/lobby/minigame?vendor=winspinity"
+    },
+    {
+      "id": "eworldmatch",
+      "category": "arcade",
+      "name": "이월드매치",
+      "shortName": "이월드매치",
+      "vendor": "eworldmatch",
+      "route": "/lobby/minigame?vendor=eworldmatch"
+    },
+    {
+      "id": "yggdrasil",
+      "category": "arcade",
+      "name": "이그드라실",
+      "shortName": "이그드라실",
+      "vendor": "yggdrasil",
+      "route": "/lobby/minigame?vendor=yggdrasil"
+    },
+    {
+      "id": "winfast",
+      "category": "arcade",
+      "name": "윈패스트",
+      "shortName": "윈패스트",
+      "vendor": "winfast",
+      "route": "/lobby/minigame?vendor=winfast"
+    },
+    {
+      "id": "gametech",
+      "category": "arcade",
+      "name": "게임테크",
+      "shortName": "게임테크",
+      "vendor": "gametech",
+      "route": "/lobby/minigame?vendor=gametech"
+    },
+    {
+      "id": "spade",
+      "category": "arcade",
+      "name": "스페이드게이밍",
+      "shortName": "스페이드",
+      "vendor": "spade",
+      "route": "/lobby/minigame?vendor=spade"
+    },
+    {
+      "id": "evoplay",
+      "category": "arcade",
+      "name": "이보플레이",
+      "shortName": "이보플레이",
+      "vendor": "evoplay",
+      "route": "/lobby/minigame?vendor=evoplay"
+    },
+    {
+      "id": "yellowbat",
+      "category": "arcade",
+      "name": "옐로우배트",
+      "shortName": "옐로우배트",
+      "vendor": "yellowbat",
+      "route": "/lobby/minigame?vendor=yellowbat"
+    }
+  ],
+  "other": [
+    {
+      "id": "color",
+      "category": "other",
+      "name": "컬러 게임",
+      "shortName": "컬러 게임",
+      "vendor": "color",
+      "route": "/lobby/minigame?vendor=color"
+    },
+    {
+      "id": "AGIN",
+      "category": "other",
+      "name": "아시아게이밍",
+      "shortName": "아시아게이밍",
+      "vendor": "AGIN",
+      "route": "/lobby/minigame?vendor=AGIN",
+      "logo": "/logo/logo_Asia.png",
+      "headline": "AGIN 계열은 외 분류로 따로 빼두고 테스트용 카드만 우선 노출합니다.",
+      "sampleGames": [
+        {
+          "game": "lobby",
+          "title": "메인 바카라",
+          "group": "바카라"
+        },
+        {
+          "game": "lobby",
+          "title": "스피드 바카라",
+          "group": "바카라"
+        },
+        {
+          "game": "lobby",
+          "title": "드래곤 타이거",
+          "group": "라이브"
+        },
+        {
+          "game": "lobby",
+          "title": "식보",
+          "group": "식보"
+        }
+      ]
+    },
+    {
+      "id": "SEXYBCRT",
+      "category": "other",
+      "name": "섹시",
+      "shortName": "섹시",
+      "vendor": "SEXYBCRT",
+      "route": "/lobby/minigame?vendor=SEXYBCRT",
+      "headline": "섹시 카지노는 외 분류 테스트 영역에서 카드형으로 바로 확인할 수 있게 둡니다.",
+      "sampleGames": [
+        {
+          "game": "lobby",
+          "title": "섹시 바카라",
+          "group": "바카라"
+        },
+        {
+          "game": "lobby",
+          "title": "스피드 바카라",
+          "group": "바카라"
+        },
+        {
+          "game": "lobby",
+          "title": "룰렛",
+          "group": "룰렛"
+        },
+        {
+          "game": "lobby",
+          "title": "블랙잭",
+          "group": "블랙잭"
+        }
+      ]
+    },
+    {
+      "id": "bt1",
+      "category": "other",
+      "name": "BT1",
+      "shortName": "BT1",
+      "vendor": "bt1",
+      "route": "/lobby/minigame?vendor=bt1",
+      "sampleGames": [
+        {
+          "game": "lobby",
+          "title": "메인 로비",
+          "group": "메인"
+        },
+        {
+          "game": "lobby",
+          "title": "빠른 입장",
+          "group": "추천"
+        }
+      ]
+    },
+    {
+      "id": "kgame",
+      "category": "other",
+      "name": "K게임",
+      "shortName": "K게임",
+      "vendor": "kgame",
+      "route": "/lobby/minigame?vendor=kgame",
+      "sampleGames": [
+        {
+          "game": "lobby",
+          "title": "메인 로비",
+          "group": "메인"
+        },
+        {
+          "game": "lobby",
+          "title": "대표 게임",
+          "group": "추천"
+        }
+      ]
+    }
+  ],
+  "holdem": [
+    {
+      "id": "realholdem",
+      "category": "holdem",
+      "name": "리얼홀덤",
+      "shortName": "리얼홀덤",
+      "vendor": "realholdem",
+      "route": "/lobby/minigame?vendor=realholdem",
+      "headline": "홀덤 전용 벤더는 별도 분류로 분리해 테이블 테스트가 편하게 맞춥니다.",
+      "sampleGames": [
+        {
+          "game": "lobby",
+          "title": "메인 로비",
+          "group": "메인"
+        },
+        {
+          "game": "lobby",
+          "title": "홀덤 테이블",
+          "group": "테이블"
+        },
+        {
+          "game": "lobby",
+          "title": "토너먼트",
+          "group": "토너먼트"
+        },
+        {
+          "game": "lobby",
+          "title": "VIP 룸",
+          "group": "VIP"
+        }
+      ]
+    }
+  ]
+}

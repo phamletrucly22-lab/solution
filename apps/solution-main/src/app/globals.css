@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+:root {
+  --bg-deep: #050505;
+  --bg-elevated: #0a0a12;
+  --brand-cyan: #22d3ee;
+  --brand-violet: #7c3aed;
+  --brand-line: #a78bfa;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --text-muted: #94a3b8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-noto), ui-sans-serif, system-ui, sans-serif;
+  /* 제목: Sora + 한글 글리프는 Noto 로 폴백 */
+  --font-display: var(--font-sora), var(--font-noto), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg-deep);
+  color: #e2e8f0;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(124, 58, 237, 0.45);
+  color: #fff;
+}
+
+/* Ambient grid — 로고 톤: 블랙 베이스 */
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-12px) translateX(4px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -120;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 6s ease-in-out infinite;
+}
+
+.animate-dash-flow {
+  animation: dash-flow 12s linear infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.8s ease-out both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.glass-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(124, 58, 237, 0.04) 50%,
+    rgba(34, 211, 238, 0.03) 100%
+  );
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+}
+
+/* 로고 실드: 시안 → 바이올렛 */
+.brand-gradient-text {
+  background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 35%, #a78bfa 70%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-ring {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.2),
+    0 0 0 1px rgba(124, 58, 237, 0.15) inset,
+    0 0 72px -12px rgba(124, 58, 237, 0.35),
+    0 0 48px -16px rgba(34, 211, 238, 0.2);
+}
+
+.brand-cta {
+  background: linear-gradient(135deg, #22d3ee 0%, #6366f1 48%, #7c3aed 100%);
+  color: #050505;
+  box-shadow: 0 12px 40px -8px rgba(124, 58, 237, 0.45), 0 8px 24px -8px rgba(34, 211, 238, 0.25);
+}
+
+.brand-cta:hover {
+  filter: brightness(1.08);
+}

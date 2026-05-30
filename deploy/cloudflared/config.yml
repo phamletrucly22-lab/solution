@@ -1,0 +1,141 @@
+# ─────────────────────────────────────────────────────────────
+# Tosino — Cloudflare Tunnel 설정
+# ─────────────────────────────────────────────────────────────
+#
+# ── 도메인 → 서비스 매핑 ────────────────────────────────────
+#   apisgate.org               → API (NestJS :4001) + sms-ingest (:4050)
+#   tozinosolution.com         → solution-main :3010   (공식 홍보/소개 사이트)
+#   www.tozinosolution.com     → solution-main :3010
+#   mod.tozinosolution.com     → /api·/uploads :4001, 나머지 super-admin :3000
+#   mod.tozinosoltion.com      → 동일 (오타 도메인 호환)
+#   user.i-on.bet / i-on.bet / www.i-on.bet
+#       → /api·/uploads :4001 (Nest), 나머지 solution-user :3002
+#   mod.i-on.bet → /api·/uploads :4001, 나머지 solution-admin :3001
+#   agent.i-on.bet → /api·/uploads :4001, 나머지 solution-agent :3003
+#   ropejfwe1.win             → staking user :3016
+#   admin.ropejfwe1.win       → staking admin :3016 (/admin)
+#   variablestrategy.com      → trading_bot Docker nginx :19080 (user + /api)
+#   www.variablestrategy.com  → :19080
+#   mod.variablestrategy.com  → :19081 (admin + /api)
+#   agent.variablestrategy.com → :19082 (agent + /api)
+# ─────────────────────────────────────────────────────────────
+
+tunnel: 50a78d10-c684-4f59-a74e-6385131744d1
+credentials-file: /home/user1/.cloudflared/50a78d10-c684-4f59-a74e-6385131744d1.json
+
+originRequest:
+  noTLSVerify: true
+  connectTimeout: 30s
+
+ingress:
+  # ══════════════════════════════════════════════════
+  # apisgate.org — API 전용 도메인
+  #   /webhook/sms   → sms-ingest (4050)
+  #   나머지 전체     → NestJS API (4001)
+  # ══════════════════════════════════════════════════
+  - hostname: apisgate.org
+    path: "^/webhook/sms$"
+    service: http://localhost:4050
+
+  - hostname: apisgate.org
+    service: http://localhost:4001
+
+  # ══════════════════════════════════════════════════
+  # tozinosolution.com — 공식 홍보/소개 사이트 (solution-main :3010)
+  #   ※ 루트/www 만 solution-main. 'mod.*' 서브도메인은 슈퍼어드민으로 간다.
+  # ══════════════════════════════════════════════════
+  - hostname: tozinosolution.com
+    service: http://localhost:3010
+
+  - hostname: www.tozinosolution.com
+    service: http://localhost:3010
+
+  # ══════════════════════════════════════════════════
+  # mod.tozinosolution.com — 슈퍼어드민(:3000) + 같은 호스트 /api → Nest(:4001)
+  #   (super-admin 은 NEXT_PUBLIC_USE_SAME_ORIGIN_API 로 https://mod.../api 호출)
+  # ══════════════════════════════════════════════════
+  - hostname: mod.tozinosolution.com
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: mod.tozinosolution.com
+    service: http://localhost:3000
+
+  # 과거 오타 도메인 호환 (일부 북마크가 남아있어 유지)
+  - hostname: mod.tozinosoltion.com
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: mod.tozinosoltion.com
+    service: http://localhost:3000
+
+  # ══════════════════════════════════════════════════
+  # i-on.bet — 솔루션 유저(3002) + 동일 호스트 /api·/uploads → Nest(4001)
+  # ══════════════════════════════════════════════════
+  - hostname: user.i-on.bet
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: user.i-on.bet
+    service: http://localhost:3002
+
+  - hostname: i-on.bet
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: i-on.bet
+    service: http://localhost:3002
+
+  - hostname: www.i-on.bet
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: www.i-on.bet
+    service: http://localhost:3002
+
+  # ══════════════════════════════════════════════════
+  # mod.i-on.bet — 솔루션 어드민(3001) + /api·/uploads → Nest(4001)
+  # ══════════════════════════════════════════════════
+  - hostname: mod.i-on.bet
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: mod.i-on.bet
+    service: http://localhost:3001
+
+  # ══════════════════════════════════════════════════
+  # agent.i-on.bet — 총판(3003) + /api·/uploads → Nest(4001)
+  # ══════════════════════════════════════════════════
+  - hostname: agent.i-on.bet
+    path: "^/(api|uploads)(/|$)"
+    service: http://localhost:4001
+
+  - hostname: agent.i-on.bet
+    service: http://localhost:3003
+
+  # ══════════════════════════════════════════════════
+  # ropejfwe1.win — staking 유저 페이지 (3016)
+  # ══════════════════════════════════════════════════
+  - hostname: ropejfwe1.win
+    service: http://localhost:3016
+
+  - hostname: admin.ropejfwe1.win
+    service: http://localhost:3016
+
+  # ══════════════════════════════════════════════════
+  # variablestrategy.com — trading_bot (docker-compose.prod.yml nginx)
+  # ══════════════════════════════════════════════════
+  - hostname: variablestrategy.com
+    service: http://127.0.0.1:19080
+
+  - hostname: www.variablestrategy.com
+    service: http://127.0.0.1:19080
+
+  - hostname: mod.variablestrategy.com
+    service: http://127.0.0.1:19081
+
+  - hostname: agent.variablestrategy.com
+    service: http://127.0.0.1:19082
+
+  # 미매칭 → 404
+  - service: http_status:404

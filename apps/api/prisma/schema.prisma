@@ -1,0 +1,1257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  PLATFORM_ADMIN
+  MASTER_AGENT
+  USER
+}
+
+enum LedgerEntryType {
+  ADJUSTMENT
+  DEPOSIT
+  WITHDRAWAL
+  BET
+  WIN
+  PAYMENT_WEBHOOK
+}
+
+enum BankSmsIngestStatus {
+  RECEIVED
+  PARSE_ERROR
+  NO_PLATFORM
+  NO_MATCH
+  AUTO_CREDITED
+  IGNORE_WITHDRAWAL
+  DUPLICATE
+}
+
+enum SyncJobType {
+  ODDS
+  CASINO
+  AFFILIATE
+  USDT_DEPOSIT
+}
+
+enum UsdtDepositTxStatus {
+  /** 최소 입금액 미달 — 관리자 수동 처리 대기 */
+  PENDING
+  /** 최소 입금액 이상 — 자동 크레딧 완료 */
+  AUTO_CREDITED
+  /** 관리자가 거절 */
+  REJECTED
+  /** 보낸 주소와 일치하는 유저 없음 */
+  UNMATCHED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/** HQ·솔루션별 IP 접근 목록 (게이트웨이 연동 시 사용) */
+enum IpAccessListKind {
+  BLACKLIST
+  WHITELIST
+}
+
+enum WalletRequestType {
+  DEPOSIT
+  WITHDRAWAL
+}
+
+enum WalletRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AgentInquiryStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
+enum PointLedgerEntryType {
+  ATTENDANCE
+  ATTENDANCE_STREAK
+  LOSE_BET
+  REFERRAL_FIRST_BET
+  REDEEM
+  ADJUSTMENT
+}
+
+/** 지갑 원장 — 포인트 전환·콤프·베팅 등 버킷 간 이동 기록 */
+enum WalletTransactionType {
+  POINT_REDEEM
+  COMP_SETTLEMENT
+  BET
+  WIN
+  DEPOSIT
+  WITHDRAW
+  UNLOCK
+  ROLLBACK
+  ADJUSTMENT
+}
+
+enum WalletBucket {
+  LOCKED_DEPOSIT
+  LOCKED_WIN
+  COMP_FREE
+  POINT_FREE
+}
+
+enum DepositEventKind {
+  FIRST_CHARGE
+  LIMITED_TIME
+}
+
+model Platform {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  /** 솔루션 미리보기 전용 인스턴스 포트 (NEXT_PUBLIC_PREVIEW_PORT 와 동일 값으로 서빙) */
+  previewPort Int?   @unique
+  themeJson Json     @default("{}")
+  flagsJson Json     @default("{}")
+  /** Sports / third-party feed wiring (no secrets — use credentialEnvKey → process.env) */
+  integrationsJson Json @default("{}")
+  /** 테더(TRC20) 정산 지갑 — 회원이 USDT를 보내는 마스터 수취 주소 */
+  settlementUsdtWallet         String?
+  /** 반가상: 은행 문자로 입금 자동 확인 (일반 결제 플로우와 분리) */
+  semiVirtualEnabled           Boolean @default(false)
+  /** 수신 단말에 등록된 번호(숫자만). 앱에서 전달한 recipientPhone 과 매칭 */
+  semiVirtualRecipientPhone    String? @unique
+  /** 계좌 줄에 포함되는 식별 문자열(예: 마스킹 계좌 일부). 휴대번호 미사용 시 구분용 */
+  semiVirtualAccountHint       String?
+  /** 회원 입금 화면에 노출할 반가상 계좌 은행명 */
+  semiVirtualBankName          String?
+  /** 회원 입금 화면에 노출할 반가상 계좌번호 */
+  semiVirtualAccountNumber     String?
+  /** 회원 입금 화면에 노출할 반가상 계좌 예금주 */
+  semiVirtualAccountHolder     String?
+  /** 입금 후 출금 잠금: rollingEnabled 회원만 의무 생성 */
+  rollingLockWithdrawals       Boolean  @default(true)
+  /**
+   * 입금액 대비 필요 롤링 턴오버 배수 (예: 1 = 100%).
+   * 아래 게임별 배수가 지정되지 않았을 때의 폴백.
+   */
+  rollingTurnoverMultiplier    Decimal  @default(1) @db.Decimal(8, 4)
+  /** 게임별 턴오버 배수 — 지정 시 이 값을 사용, 미지정 시 rollingTurnoverMultiplier 폴백 */
+  rollingTurnoverSports        Decimal? @db.Decimal(8, 4)
+  rollingTurnoverCasino        Decimal? @db.Decimal(8, 4)
+  rollingTurnoverSlot          Decimal? @db.Decimal(8, 4)
+  rollingTurnoverMinigame      Decimal? @db.Decimal(8, 4)
+  rollingTurnoverArcade        Decimal? @db.Decimal(8, 4)
+  /** 총판이 하위 회원 롤링 % 편집 가능 여부 */
+  agentCanEditMemberRolling    Boolean  @default(true)
+  minDepositKrw                Decimal? @db.Decimal(18, 2)
+  minDepositUsdt               Decimal? @db.Decimal(18, 8)
+  minWithdrawKrw               Decimal? @db.Decimal(18, 2)
+  minWithdrawUsdt              Decimal? @db.Decimal(18, 8)
+  minPointRedeemPoints         Int?
+  minPointRedeemKrw            Decimal? @db.Decimal(18, 2)
+  minPointRedeemUsdt           Decimal? @db.Decimal(18, 8)
+  /** 출석·낙첨·추천 등 포인트 규칙 JSON */
+  pointRulesJson               Json     @default("{}")
+  /**
+   * 솔루션 알(크레딧) 잔액 — 마스터어드민 승인 시 증가, 솔루션 청구 정산 실행 시 감소.
+   * 음수 가능(연체 상태 표현). 잔액이 0 이하이면 솔루션 서비스 차단 로직 적용 가능.
+   */
+  creditBalance                Decimal  @default(0) @db.Decimal(18, 2)
+  /**
+   * 알 잔액 상한(초기 충전 기준). 승인된 크레딧 요청 합계로 누적 증가.
+   * creditBalance 복구(가상) 시 이 값을 초과할 수 없다.
+   */
+  reserveInitialAmount         Decimal  @default(0) @db.Decimal(18, 2)
+  /**
+   * 알 가상 잔액 시스템 마스터 스위치.
+   * true = 실시간(Vinus 카지노 콜백) + 배치 정산 모두에서 DEDUCT/RESTORE 처리
+   * false = 모든 reserve 이벤트 무시 (테스트 전용 모드). 수동 API/테스트시나리오는 계속 동작.
+   * 이 플래그 하나만 true→true 로 바꾸면 그 즉시 운영 반영이 시작된다.
+   */
+  reserveEnabled               Boolean  @default(true)
+  /** 승리 시 가상 복구 사용 여부 (관리자 토글). true 일 때만 RESTORE 이벤트가 잔액에 반영된다. */
+  reserveRestoreEnabled        Boolean  @default(false)
+  /**
+   * 알 차감/복구 계산에 사용할 비율 (예: 0.07 = 7%).
+   * null 이면 기존 solutionRatePolicy 의 platform 비율이 폴백으로 사용된다.
+   */
+  reserveRatePct               Decimal? @db.Decimal(8, 4)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  domains       PlatformDomain[]
+  users         User[]
+  wallets       Wallet[]
+  ledgerEntries LedgerEntry[]
+  idempotency   IdempotencyKey[]
+  syncStates           SyncState[]
+  walletRequests       WalletRequest[]
+  sportsOddsSnapshots  SportsOddsSnapshot[]
+  oddsApiCatalogSnapshots OddsApiCatalogSnapshot[]
+  oddsApiProcessedSnapshots OddsApiProcessedSnapshot[]
+  announcements        PlatformAnnouncement[]
+  announcementAssets   PlatformAnnouncementAsset[]
+  bankSmsIngests       BankSmsIngest[]
+  usdtDepositTxs       UsdtDepositTx[]
+  agentInquiries       AgentInquiry[]
+  vinusSessionTokens   VinusSessionToken[]
+  casinoVinusTxs       CasinoVinusTx[]
+  sportsBetReservations SportsBetReservation[]
+  rollingObligations   RollingObligation[]
+  depositEvents        DepositEvent[]
+  compSettlements      CompSettlement[]
+  solutionBillingSettlements SolutionBillingSettlement[]
+  creditRequests       PlatformCreditRequest[]
+  reserveLogs          PlatformReserveLog[]
+  semiVirtualBundles   SemiVirtualBundle[]
+  semiVirtualAccounts  SemiVirtualAccount[]
+  policyHistory        PlatformPolicyHistory[]
+  ipAccessRules        IpAccessRule[]
+  pointRedeemLogs      PointRedeemLog[]
+  compSettlementLogs   CompSettlementLedgerLog[]
+  walletTransactions   WalletTransaction[]
+}
+
+/**
+ * 반가상 입금 계좌 번들.
+ * 운영자가 여러 계좌를 하나의 번들로 묶어 저장하며, 번들이 새로 만들어지면
+ * 이전 번들은 status=RETIRED 로 보존한다. 과거 번들 계좌로 잘못 입금하는
+ * 회원을 식별하기 위해 계좌 자체는 삭제하지 않는다.
+ */
+model SemiVirtualBundle {
+  id             String   @id @default(cuid())
+  platformId     String
+  platform       Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /** 운영자 별칭 — 예: "2026-04 1차", 미입력 시 자동 번호 */
+  label          String?
+  /** CURRENT (활성) | RETIRED (보존) */
+  status         String   @default("CURRENT")
+  createdByUserId String?
+  createdAt      DateTime @default(now())
+  retiredAt      DateTime?
+  retiredReason  String?
+  accounts       SemiVirtualAccount[]
+
+  @@index([platformId, status, createdAt])
+}
+
+model SemiVirtualAccount {
+  id            String   @id @default(cuid())
+  bundleId      String
+  bundle        SemiVirtualBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  platformId    String
+  platform      Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  bankName      String
+  accountNumber String
+  accountHolder String
+  memo          String?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([bundleId])
+  @@index([platformId])
+  @@index([platformId, accountNumber])
+}
+
+/**
+ * 운영 정책 변경 이력 — 롤링/콤프/포인트/회원가입 등 주요 운영 설정의
+ * Before/After JSON 을 누적 보존하여 감사(audit) · 되돌아보기에 사용.
+ */
+model PlatformPolicyHistory {
+  id               String   @id @default(cuid())
+  platformId       String
+  platform         Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /** 정책 유형: rolling | comp | point | signup | semi_virtual | general */
+  policyType       String
+  beforeJson       Json     @default("{}")
+  afterJson        Json     @default("{}")
+  changedByUserId  String?
+  changedByLoginId String?
+  note             String?
+  createdAt        DateTime @default(now())
+
+  @@index([platformId, policyType, createdAt])
+}
+
+/// Vinus Gaming 게임 실행 시 회원 식별용(15~25자). 입장 시마다 재발급.
+model VinusSessionToken {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platformId String
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  token      String   @unique @db.VarChar(50)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([platformId])
+}
+
+/// Vinus 콜백 transaction_id 멱등·취소 추적
+model CasinoVinusTx {
+  id           String    @id @default(cuid())
+  platformId   String
+  platform     Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalId   String    @unique @db.VarChar(64)
+  kind         String    @db.VarChar(32)
+  gameId       String?   @db.VarChar(100)
+  roundId      String?   @db.VarChar(64)
+  stake        Decimal?  @db.Decimal(18, 2)
+  payout       Decimal?  @db.Decimal(18, 2)
+  cancelledAt  DateTime?
+  refundedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([platformId, userId])
+  @@index([userId, gameId, roundId])
+}
+
+/// 스포츠 예약 베팅(reserve_id) · 실제 베팅(req_id) · 확정
+model SportsBetReservation {
+  id                  String   @id @default(cuid())
+  platformId          String
+  platform            Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /** 벤더 예약 식별자 (플랫폼 내 유일) */
+  reserveId           String   @db.VarChar(64)
+  reservedAmount      Decimal  @db.Decimal(18, 2)
+  consumedAmount      Decimal  @default(0) @db.Decimal(18, 2)
+  /** PENDING → ORDERED(주문 멱등 설정) → CONFIRMED(확정) */
+  status              String   @default("PENDING") @db.VarChar(24)
+  /** 같은 주문 재요청 멱등 키 (베팅 주문 transaction_id) */
+  orderIdempotencyKey String?  @unique @db.VarChar(64)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  actuals SportsBetActual[]
+
+  @@unique([platformId, reserveId])
+  @@index([userId, reserveId])
+}
+
+model SportsBetActual {
+  id             String               @id @default(cuid())
+  platformId     String
+  userId         String
+  reservationId  String
+  reservation    SportsBetReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  /** 동일 reserve_id 내 개별 실제 베팅 구분 */
+  reqId          String               @db.VarChar(64)
+  externalId     String               @unique @db.VarChar(64)
+  amount         Decimal              @db.Decimal(18, 2)
+  createdAt      DateTime             @default(now())
+
+  @@unique([reservationId, reqId])
+  @@index([platformId, userId])
+}
+
+/// 모바일 공지 팝업용 이미지(최대 4). 권장 비율 약 367×451px.
+model PlatformAnnouncement {
+  id          String   @id @default(cuid())
+  platformId  String
+  platform    Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /** 절대 URL 또는 `/uploads/...` 상대 경로 */
+  imageUrl    String
+  imageWidth  Int?
+  imageHeight Int?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  /** true면 회원이 읽음 처리 전 솔루션 내 이동 제한(클라이언트 게이트) */
+  mandatoryRead Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reads AnnouncementRead[]
+
+  @@index([platformId, sortOrder])
+}
+
+model AnnouncementRead {
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcementId String
+  announcement   PlatformAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  readAt         DateTime             @default(now())
+
+  @@id([userId, announcementId])
+  @@index([announcementId])
+}
+
+/// 입금 승인 시 롤링 출금 잠금용 (FIFO 턴오버 차감)
+model RollingObligation {
+  id                String    @id @default(cuid())
+  platformId        String
+  platform          Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceRef         String    @db.VarChar(160)
+  principalAmount   Decimal   @db.Decimal(18, 2)
+  requiredTurnover  Decimal   @db.Decimal(18, 2)
+  appliedTurnover   Decimal   @default(0) @db.Decimal(18, 2)
+  createdAt         DateTime  @default(now())
+  satisfiedAt       DateTime?
+
+  @@index([userId, satisfiedAt])
+  @@index([platformId, userId])
+}
+
+model DepositEvent {
+  id          String           @id @default(cuid())
+  platformId  String
+  platform    Platform         @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  kind        DepositEventKind
+  title       String
+  active      Boolean          @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  /** [{ "minAmount": "10000", "bonusAmount": "1000" }] 문자열 금액 */
+  tiersJson   Json             @default("[]")
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  claims UserDepositEventClaim[]
+
+  @@index([platformId, kind, active])
+}
+
+model UserDepositEventClaim {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     DepositEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+}
+
+model PointLedgerEntry {
+  id           String               @id @default(cuid())
+  platformId   String
+  userId       String
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         PointLedgerEntryType
+  amount       Decimal              @db.Decimal(18, 2)
+  balanceAfter Decimal              @db.Decimal(18, 2)
+  reference    String?
+  metaJson     Json                 @default("{}")
+  createdAt    DateTime             @default(now())
+
+  @@index([userId, createdAt])
+  @@index([platformId, userId])
+}
+
+model CompSettlement {
+  id                   String   @id @default(cuid())
+  platformId           String
+  platform             Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodFrom           DateTime
+  periodTo             DateTime
+  baseAmount           Decimal  @db.Decimal(18, 2)
+  ratePct              Decimal  @db.Decimal(7, 4)
+  amount               Decimal  @db.Decimal(18, 2)
+  settlementCycle      String   @db.VarChar(32)
+  settlementOffsetDays Int?
+  note                 String?
+  settledByUserId      String?
+  settledByLoginId     String?
+  ledgerReference      String?
+  createdAt            DateTime @default(now())
+
+  @@unique([platformId, userId, periodFrom, periodTo])
+  @@index([platformId, createdAt])
+  @@index([platformId, periodFrom, periodTo])
+  @@index([userId, createdAt])
+}
+
+model SolutionBillingSettlement {
+  id                 String   @id @default(cuid())
+  platformId         String
+  platform           Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  periodFrom         DateTime
+  periodTo           DateTime
+  casinoBaseGgr      Decimal  @db.Decimal(18, 2)
+  sportsBaseGgr      Decimal  @db.Decimal(18, 2)
+  upstreamCasinoPct  Decimal  @db.Decimal(7, 4)
+  upstreamSportsPct  Decimal  @db.Decimal(7, 4)
+  platformCasinoPct  Decimal  @db.Decimal(7, 4)
+  platformSportsPct  Decimal  @db.Decimal(7, 4)
+  upstreamCost       Decimal  @db.Decimal(18, 2)
+  platformCharge     Decimal  @db.Decimal(18, 2)
+  solutionMargin     Decimal  @db.Decimal(18, 2)
+  note               String?
+  settledByUserId    String?
+  settledByLoginId   String?
+  createdAt          DateTime @default(now())
+
+  @@unique([platformId, periodFrom, periodTo])
+  @@index([platformId, createdAt])
+  @@index([platformId, periodFrom, periodTo])
+}
+
+/// 업로드된 공지용 이미지 라이브러리(플랫폼별)
+model PlatformAnnouncementAsset {
+  id           String   @id @default(cuid())
+  platformId   String
+  platform     Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /** uploads 폴더 기준 상대 경로 e.g. announcements/{platformId}/uuid.png */
+  storagePath  String
+  mimeType     String
+  sizeBytes    Int
+  width        Int
+  height       Int
+  originalName String?
+  createdAt    DateTime @default(now())
+
+  @@index([platformId, createdAt])
+}
+
+/// 메인 서버(워커)가 외부 배당 API를 호출한 뒤 저장하는 스냅샷. integrationsJson은 설정만 담고 여기 갱신된다.
+model SportsOddsSnapshot {
+  id            String   @id @default(cuid())
+  platformId    String
+  platform      Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  sourceFeedId  String
+  sportLabel    String
+  market        String?
+  payloadJson   Json     @default("{}")
+  fetchedAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([platformId, sourceFeedId])
+  @@index([platformId, updatedAt])
+}
+
+/// odds-api 원본 카탈로그 저장소. events + odds/multi 결과를 실행 시점별로 보존한다.
+model OddsApiCatalogSnapshot {
+  id            String   @id @default(cuid())
+  platformId    String
+  platform      Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  filtersJson   Json     @default("{}")
+  totalItems    Int      @default(0)
+  payloadJson   Json     @default("{}")
+  fetchedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  processedSnapshots OddsApiProcessedSnapshot[] @relation("OddsApiCatalogProcessed")
+
+  @@index([platformId, fetchedAt])
+}
+
+/// odds-api.io 의 리그(slug) → 한글명/로고/국가/표시우선순위 매핑.
+/// 수집 시점에 원본명 + slug 만 채워 자동 upsert 되고, 관리자가 나중에 koreanName/logoUrl 을 보강한다.
+/// 집계 단계에서 (sport, slug) 로 join 되어 솔루션 사이트 응답의 league.nameKr / logoUrl 을 채운다.
+model OddsApiLeagueAlias {
+  id              String   @id @default(cuid())
+  sport           String
+  slug            String
+  originalName    String
+  koreanName      String?
+  logoUrl         String?
+  country         String?
+  displayPriority Int      @default(100)
+  isHidden        Boolean  @default(false)
+  firstSeenAt     DateTime @default(now())
+  lastSeenAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([sport, slug])
+  @@index([sport])
+  @@index([isHidden])
+}
+
+/// odds-api.io 의 팀(externalId) → 한글명/로고/국가 매핑.
+/// externalId 는 String 으로 저장 (odds-api 가 12자리 숫자 id 도 발급하여 Int32 초과 위험).
+model OddsApiTeamAlias {
+  id           String   @id @default(cuid())
+  sport        String
+  externalId   String
+  originalName String
+  koreanName   String?
+  logoUrl      String?
+  country      String?
+  firstSeenAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([sport, externalId])
+  @@index([sport])
+  @@index([originalName])
+}
+
+/// 스코어 크롤러(예: livesport) 가 발견한 리그 슬러그를 odds-api.io 리그 슬러그로 매핑하기 위한 테이블.
+/// 크롤러가 돌 때마다 "처음 보는 리그" 는 status=pending 으로 자동 upsert 된다.
+/// Super-Admin 이 provider_league_slug 를 채워 status=confirmed 로 바꾸면 매칭 엔진이 사용한다.
+model CrawlerLeagueMapping {
+  id                   String   @id @default(cuid())
+  sourceSite           String                              // "aiscore" 또는 "livesport"
+  sourceSportSlug      String                              // 크롤러 사이트의 sport 카테고리
+  sourceLeagueSlug     String                              // 예: "south-korea/k-league-1" 또는 "russian-premier-league/{id}"
+  sourceLeagueLabel    String?                             // "K리그 1", "프리미어 리그"
+  sourceLeagueLogo     String?                             // 리그 전용 로고 (있을 때만)
+  sourceCountryLabel   String?                             // "대한민국", "러시아"
+  sourceCountryFlag    String?                             // 국기 이미지 (로컬 캐시된 /assets 경로)
+  internalSportSlug    String?                             // 내부 표준 sport (예: "football")
+  providerName         String?                             // 현재는 "odds-api.io"
+  providerSportSlug    String?                             // odds-api.io 의 sport (예: "football")
+  providerLeagueSlug   String?                             // odds-api.io 의 league slug (예: "south-korea-k-league-1")
+  providerLeagueLabel  String?                             // odds-api.io 의 league 표기
+  status               String   @default("pending")        // pending | confirmed | ignored
+  note                 String?
+  matchCount           Int      @default(0)                // 이 리그로 집계된 raw match 수
+  firstSeenAt          DateTime @default(now())
+  lastSeenAt           DateTime @default(now())
+  confirmedAt          DateTime?
+  confirmedBy          String?
+  updatedAt            DateTime @updatedAt
+
+  @@unique([sourceSite, sourceLeagueSlug])
+  @@index([sourceSite, status])
+  @@index([providerName, providerLeagueSlug])
+  @@index([internalSportSlug])
+}
+
+/// 스코어 크롤러(예: livesport) 가 발견한 팀을 odds-api.io 팀 externalId 로 매핑하기 위한 테이블.
+/// 리그 매핑과 동일한 workflow: 크롤러가 돌 때마다 distinct team 들을 pending 으로 올려두고,
+/// Super-Admin 이 providerTeamExternalId 를 채워 confirmed 로 바꾸면 매칭 엔진이 사용한다.
+/// 확정 시에는 sourceTeamName(한글일 가능성 높음) 을 OddsApiTeamAlias.koreanName 으로 역학습해 채울 수 있다.
+model CrawlerTeamMapping {
+  id                     String   @id @default(cuid())
+  sourceSite             String                               // "livesport" 등
+  sourceSportSlug        String                               // livesport 의 sport 카테고리
+  sourceTeamName         String                               // livesport 상의 팀 이름 (한글 가능)
+  sourceTeamSlug         String?                              // href 에서 뽑은 slug
+  sourceTeamHref         String?
+  sourceTeamLogo         String?
+  sourceLeagueSlug       String?                              // 어떤 리그에서 나왔는지 (참고용)
+  sourceLeagueLabel      String?
+  sourceCountryLabel     String?
+  internalSportSlug      String?                              // "football" 등 내부 표준 sport
+  providerName           String?                              // "odds-api.io"
+  providerSportSlug      String?                              // odds-api.io sport
+  providerTeamExternalId String?                              // odds-api.io team externalId
+  providerTeamName       String?                              // odds-api.io 에서의 team originalName
+  status                 String   @default("pending")         // pending | confirmed | ignored
+  note                   String?
+  matchCount             Int      @default(0)                 // 이 팀이 등장한 raw match 수 (home+away)
+  firstSeenAt            DateTime @default(now())
+  lastSeenAt             DateTime @default(now())
+  confirmedAt            DateTime?
+  confirmedBy            String?
+  updatedAt              DateTime @updatedAt
+
+  @@unique([sourceSite, sourceSportSlug, sourceTeamName])
+  @@index([sourceSite, status])
+  @@index([providerName, providerTeamExternalId])
+  @@index([internalSportSlug])
+}
+
+/// 스코어 크롤러가 올린 raw 경기 row 1건 — sqlite 의 crawler_matches_raw 와 같은 의미.
+/// 매처가 이 테이블을 돌면서 CrawlerMatchMapping 을 만들거나 업데이트한다.
+model CrawlerRawMatch {
+  id                  String   @id @default(cuid())
+  sourceSite          String
+  sourceSportSlug     String
+  sourceMatchId       String
+  /// 이중 로케일 수집(aiscore ko 루트 vs 영어 루트 등). 기본 ko.
+  sourceLocale        String   @default("ko")
+  sourceUrl           String?
+  sourceMatchHref     String?
+  internalSportSlug   String?
+  providerName        String?
+  providerSportSlug   String?
+  rawHomeName         String?
+  rawHomeSlug         String?
+  rawAwayName         String?
+  rawAwaySlug         String?
+  rawLeagueLabel      String?
+  rawLeagueSlug       String?
+  rawCountryLabel     String?
+  rawKickoffText      String?
+  rawKickoffUtc       DateTime?
+  rawScoreText        String?
+  rawStatusText       String?
+  firstSeenAt         DateTime @default(now())
+  lastSeenAt          DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  /// 동일 sourceMatchId 의 다른 로케일 raw (예: ko ↔ en). 양방향으로 같은 id 를 가리키게 맞춘다.
+  pairedRawMatchId    String?
+  pairedRawMatch      CrawlerRawMatch?  @relation("CrawlerRawMatchLocalePair", fields: [pairedRawMatchId], references: [id], onDelete: SetNull)
+  localePairOf        CrawlerRawMatch[] @relation("CrawlerRawMatchLocalePair")
+
+  mapping             CrawlerMatchMapping?
+
+  @@unique([sourceSite, sourceSportSlug, sourceMatchId, sourceLocale])
+  @@index([sourceSite, rawKickoffUtc])
+  @@index([internalSportSlug, rawKickoffUtc])
+  @@index([rawLeagueSlug])
+  @@index([pairedRawMatchId])
+}
+
+/// livesport raw match ↔ odds-api.io event 의 매칭 결과.
+/// status=auto 는 엄격 규칙으로 자동 확정, manual 은 운영자 검수 확정.
+model CrawlerMatchMapping {
+  id                      String   @id @default(cuid())
+  rawMatchId              String   @unique
+  rawMatch                CrawlerRawMatch @relation(fields: [rawMatchId], references: [id], onDelete: Cascade)
+
+  // 컨텍스트 (raw 에서 복사 — 인덱스/조회 편의용)
+  sourceSite              String
+  sourceSportSlug         String
+  internalSportSlug       String?
+  rawLeagueSlug           String?
+  rawHomeName             String?
+  rawAwayName             String?
+  rawKickoffUtc           DateTime?
+
+  // 확정된 매핑 참조 (snapshot 값 — 변동 추적용)
+  leagueMappingId         String?
+  homeTeamMappingId       String?
+  awayTeamMappingId       String?
+
+  // provider(odds-api.io) 쪽 매칭 대상
+  providerName            String   @default("odds-api.io")
+  providerSportSlug       String?
+  providerLeagueSlug      String?
+  providerExternalEventId String?
+  providerHomeExternalId  String?
+  providerAwayExternalId  String?
+  providerHomeName        String?
+  providerAwayName        String?
+  providerKickoffUtc      DateTime?
+  kickoffDeltaSeconds     Int?
+
+  // 매칭 상태 — auto | confirmed | pending | rejected | ignored
+  status                  String   @default("pending")
+  matchedVia              String?                     // "strict" | "manual" | null
+  matchScore              Float?                      // 0..1 (strict 는 1.0)
+  candidatesJson          Json?                       // pending 인 경우 가능한 후보 stash
+  reason                  String?                     // pending/rejected 원인
+  note                    String?
+
+  firstSeenAt             DateTime @default(now())
+  matchedAt               DateTime?
+  confirmedAt             DateTime?
+  confirmedBy             String?
+  updatedAt               DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([providerSportSlug, providerExternalEventId])
+  @@index([rawKickoffUtc])
+}
+
+/// Phase 3 stub — 스코어 크롤러가 "이 경기만 솔루션에 노출" 로 넣을 화이트리스트.
+/// 비어있으면 필터 off (기본 동작). platform 별 적용 여부는 platform.integrationsJson.oddsApi 쪽에서 제어.
+model OddsApiDisplayWhitelist {
+  id         String   @id @default(cuid())
+  sport      String
+  externalEventId String
+  source     String   @default("score-crawler")
+  addedAt    DateTime @default(now())
+  expiresAt  DateTime?
+
+  @@unique([sport, externalEventId])
+  @@index([expiresAt])
+}
+
+/// odds-api 가공 결과 저장소. 라이브/프리매치 클라이언트용 payload 를 실행 시점별로 보존한다.
+model OddsApiProcessedSnapshot {
+  id                String   @id @default(cuid())
+  platformId        String
+  platform          Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  catalogSnapshotId String?
+  catalogSnapshot   OddsApiCatalogSnapshot? @relation("OddsApiCatalogProcessed", fields: [catalogSnapshotId], references: [id], onDelete: SetNull)
+  snapshotType      String
+  filtersJson       Json     @default("{}")
+  totalMatches      Int      @default(0)
+  payloadJson       Json     @default("{}")
+  fetchedAt         DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  @@index([platformId, snapshotType, fetchedAt])
+  @@index([catalogSnapshotId])
+}
+
+model PlatformDomain {
+  id         String   @id @default(cuid())
+  host       String   @unique
+  platformId String
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model IpAccessRule {
+  id         String           @id @default(cuid())
+  /** true 이면 모든 솔루션 공통 규칙(platformId 무시) */
+  isGlobal   Boolean          @default(false)
+  platformId String?
+  platform   Platform?        @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  kind       IpAccessListKind
+  cidr       String
+  note       String?
+  createdAt  DateTime         @default(now())
+
+  @@index([platformId])
+  @@index([isGlobal])
+}
+
+model User {
+  id                   String             @id @default(cuid())
+  /** 로그인·가입 아이디. 플랫폼 소속은 (platformId, loginId) 유일 */
+  loginId              String
+  /** 선택 연락처(알림 등). 로그인에 사용하지 않음 */
+  email                String?
+  passwordHash         String
+  role                 UserRole
+  platformId           String?
+  platform             Platform?          @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  parentUserId         String?
+  parent               User?              @relation("AgentTree", fields: [parentUserId], references: [id], onDelete: SetNull)
+  children             User[]             @relation("AgentTree")
+  referredByUserId     String?
+  referredBy           User?              @relation("UserReferrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referredUsers        User[]             @relation("UserReferrals")
+  displayName          String?
+  /** 가입 유형: full(실명) | anonymous(무기명) */
+  signupMode           String?
+  /** 회원가입 화면에서 실제 입력한 가입코드 또는 추천인 아이디 */
+  signupReferralInput  String?
+  /** 텔레그램 아이디 (@ 제외) */
+  telegramUsername     String?
+  /** 전화번호 (010XXXXXXXX 형식) */
+  phone                String?
+  /** 통신사 */
+  telecomCompany       String?
+  /** 생년월일 YYYYMMDD */
+  birthDate            String?
+  /** 성별 M | F */
+  gender               String?
+  /** 은행 코드 */
+  bankCode             String?
+  /** 계좌번호 */
+  bankAccountNumber    String?
+  /** 예금주 */
+  bankAccountHolder    String?
+  /** 테더(TRC20) 출금 지갑 주소 */
+  usdtWalletAddress    String?
+  /** 입출금 2차 비밀번호 (bcrypt hash) */
+  exchangePinHash      String?
+  /** 총판(또는 플랫폼)이 하위 회원에게 남기는 메모 */
+  agentMemo            String?            @db.Text
+  /** 회원 본인이 쓰는 메모(본인·플랫폼 관리자 조회) */
+  userMemo             String?            @db.Text
+  /** 플랫폼·슈퍼관리자만 조회·수정 (최상위 총판 식별 등). 총판 계정은 볼 수 없음 */
+  masterPrivateMemo    String?            @db.Text
+  /** 직속 상위 총판(MASTER_AGENT)만 조회·수정. 하위 총판·유저용 식별 메모 */
+  uplinePrivateMemo    String?            @db.Text
+  /** 총판이 하위 회원에 설정하는 롤링 배당(%) */
+  rollingEnabled       Boolean            @default(false)
+  rollingSportsDomesticPct  Decimal?      @db.Decimal(5, 2)
+  rollingSportsOverseasPct  Decimal?      @db.Decimal(5, 2)
+  rollingCasinoPct     Decimal?           @db.Decimal(5, 2)
+  rollingSlotPct       Decimal?           @db.Decimal(5, 2)
+  rollingMinigamePct   Decimal?           @db.Decimal(5, 2)
+  registrationStatus RegistrationStatus @default(APPROVED)
+  /** 승인·거절 처리 시각 (가입 승인 내역용) */
+  registrationResolvedAt DateTime?
+  referralCode         String?
+  /** 플랫폼(마스터)이 최상위 총판에 부여한 기준 요율(%). 상위가 총판이 아니면 사용 */
+  agentPlatformSharePct   Decimal?        @db.Decimal(5, 2)
+  /** 직속 상위가 총판일 때: 상위 실효 요율의 몇 %를 이 총판이 가져가는지(0~100). 실효 = 상위실효 × 이값/100 */
+  agentSplitFromParentPct Decimal?        @db.Decimal(5, 2)
+  /** 블랙리스트 차단 여부. 플랫폼 어드민이 유저별로 관리 */
+  isBlocked            Boolean            @default(false)
+  blockedReason        String?            @db.Text
+  blockedAt            DateTime?
+  /** 차단을 수행한 관리자 userId (선택) */
+  blockedByUserId      String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  /** 성공한 마지막 로그인 시각 (POST /auth/login) */
+  lastLoginAt          DateTime?
+  /** 마지막 로그인 시 클라이언트 IP (프록시 시 X-Forwarded-For 우선) */
+  lastLoginIp          String?            @db.VarChar(45)
+
+  wallet                     Wallet?
+  ledgerEntries              LedgerEntry[]
+  walletRequests             WalletRequest[]
+  rollingRateRevisions       RollingRateRevision[]
+  agentCommissionRevisions   AgentCommissionRevision[]
+  agentInquiriesAuthored     AgentInquiry[]            @relation("AgentInquiryAuthor")
+  agentInquiriesReplied      AgentInquiry[]            @relation("AgentInquiryReplier")
+  vinusSessionTokens         VinusSessionToken[]
+  casinoVinusTxs             CasinoVinusTx[]
+  sportsBetReservations      SportsBetReservation[]
+  rollingObligations         RollingObligation[]
+  announcementReads          AnnouncementRead[]
+  pointLedgerEntries         PointLedgerEntry[]
+  depositEventClaims         UserDepositEventClaim[]
+  usdtDepositTxs             UsdtDepositTx[]
+  compSettlements            CompSettlement[]
+  pointRedeemLogs            PointRedeemLog[]
+  compSettlementLedgerLogs   CompSettlementLedgerLog[]
+  walletTransactions         WalletTransaction[]
+
+  @@index([platformId])
+  @@index([parentUserId])
+  @@index([referredByUserId])
+  @@index([platformId, registrationResolvedAt])
+  @@index([loginId])
+  @@index([platformId, loginId])
+  @@index([platformId, isBlocked])
+  @@index([phone])
+  @@index([bankAccountNumber])
+}
+
+/// 회원 롤링 % 변경 이력. 정산 시각 T에는 effectiveFrom ≤ T 인 최신 행 기준.
+model RollingRateRevision {
+  id                        String   @id @default(cuid())
+  userId                    String
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rollingEnabled            Boolean
+  rollingSportsDomesticPct  Decimal? @db.Decimal(5, 2)
+  rollingSportsOverseasPct  Decimal? @db.Decimal(5, 2)
+  rollingCasinoPct          Decimal? @db.Decimal(5, 2)
+  rollingSlotPct            Decimal? @db.Decimal(5, 2)
+  rollingMinigamePct        Decimal? @db.Decimal(5, 2)
+  effectiveFrom             DateTime
+  createdAt                 DateTime @default(now())
+
+  @@index([userId, effectiveFrom])
+}
+
+/// 총판 플랫폼 요율·상위분배% 변경 이력 (MASTER_AGENT 전용)
+model AgentCommissionRevision {
+  id                        String   @id @default(cuid())
+  userId                    String
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentPlatformSharePct     Decimal? @db.Decimal(5, 2)
+  agentSplitFromParentPct   Decimal? @db.Decimal(5, 2)
+  effectiveFrom             DateTime
+  createdAt                 DateTime @default(now())
+
+  @@index([userId, effectiveFrom])
+}
+
+model Wallet {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platformId String
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /**
+   * 총 보유액(표시·호환용). lockedDeposit+lockedWin+compFree+pointFree 와 항상 일치하도록 유지.
+   */
+  balance    Decimal  @default(0) @db.Decimal(18, 2)
+  /** 입금·입금성 보너스 등 롤링 대상 기본 풀 */
+  lockedDeposit Decimal @default(0) @db.Decimal(18, 2)
+  /** 잠금 자금 베팅으로 발생한 당첨·카지노 순이익 누적 풀 */
+  lockedWin     Decimal @default(0) @db.Decimal(18, 2)
+  /** 콤프 정산 등 무롤링 적립금 */
+  compFree      Decimal @default(0) @db.Decimal(18, 2)
+  /** 포인트 전환 머니 — 무롤링 */
+  pointFree     Decimal @default(0) @db.Decimal(18, 2)
+  pointBalance Decimal @default(0) @db.Decimal(18, 2)
+  updatedAt  DateTime @updatedAt
+
+  @@index([platformId])
+}
+
+/// 포인트→머니 전환 감사 로그
+model PointRedeemLog {
+  id              String   @id @default(cuid())
+  platformId      String
+  platform        Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /** 전환된 원화(또는 USDT를 원화 환산 전 금액이 아닌, 지갑에 더해진 KRW 등가) */
+  redeemAmount    Decimal  @db.Decimal(18, 2)
+  pointsRedeemed  Decimal  @db.Decimal(18, 2)
+  pointBefore     Decimal  @db.Decimal(18, 2)
+  pointAfter      Decimal  @db.Decimal(18, 2)
+  pointFreeBefore Decimal  @db.Decimal(18, 2)
+  pointFreeAfter  Decimal  @db.Decimal(18, 2)
+  currency        String   @default("KRW") @db.VarChar(8)
+  eventKey        String   @unique @db.VarChar(160)
+  createdAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([platformId, createdAt])
+}
+
+/// 콤프 정산 comp_free 적립 감사 로그
+model CompSettlementLedgerLog {
+  id                    String   @id @default(cuid())
+  platformId            String
+  platform              Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settlementAmount      Decimal  @db.Decimal(18, 2)
+  compFreeBefore        Decimal  @db.Decimal(18, 2)
+  compFreeAfter         Decimal  @db.Decimal(18, 2)
+  settlementPeriodStart DateTime
+  settlementPeriodEnd   DateTime
+  compSettlementId      String?  @unique
+  eventKey              String   @unique @db.VarChar(160)
+  createdAt             DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([platformId, createdAt])
+}
+
+model WalletTransaction {
+  id              String               @id @default(cuid())
+  platformId      String
+  platform        Platform             @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionType WalletTransactionType
+  sourceBucket    WalletBucket?
+  targetBucket    WalletBucket?
+  amount          Decimal              @db.Decimal(18, 2)
+  balanceBefore   Decimal              @db.Decimal(18, 2)
+  balanceAfter    Decimal              @db.Decimal(18, 2)
+  metadata        Json                 @default("{}")
+  eventKey        String?              @db.VarChar(160)
+  createdAt       DateTime             @default(now())
+
+  @@index([userId, createdAt])
+  @@index([platformId, createdAt])
+  @@index([platformId, eventKey])
+}
+
+model LedgerEntry {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platformId  String
+  platform    Platform        @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  type        LedgerEntryType
+  amount      Decimal         @db.Decimal(18, 2)
+  balanceAfter Decimal        @db.Decimal(18, 2)
+  reference   String?
+  metaJson    Json            @default("{}")
+  createdAt   DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@index([platformId])
+}
+
+model IdempotencyKey {
+  id         String   @id @default(cuid())
+  key        String
+  platformId String
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  responseJson Json?
+  createdAt  DateTime @default(now())
+
+  @@unique([platformId, key])
+}
+
+model SyncState {
+  id         String      @id @default(cuid())
+  platformId String
+  platform   Platform    @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  jobType    SyncJobType
+  lastRunAt  DateTime?
+  lastOkAt   DateTime?
+  lastError  String?
+  stubPayload Json?
+
+  @@unique([platformId, jobType])
+}
+
+model WalletRequest {
+  id           String              @id @default(cuid())
+  platformId   String
+  platform     Platform            @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         WalletRequestType
+  amount       Decimal             @db.Decimal(18, 2)
+  currency     String              @default("KRW")
+  status       WalletRequestStatus @default(PENDING)
+  note         String?
+  /** 반가상 입금 매칭용 입금자명(은행 문자 ee 와 비교) */
+  depositorName String?
+  resolverNote String?
+  createdAt    DateTime            @default(now())
+  resolvedAt   DateTime?
+
+  bankSmsIngests  BankSmsIngest[]
+  usdtDepositTx   UsdtDepositTx?
+
+  @@index([platformId, status])
+  @@index([platformId, status, currency])
+  @@index([userId, createdAt])
+}
+
+/// TronGrid TRC20 USDT 입금 트랜잭션 추적 (중복 처리 방지 + 대기 관리)
+model UsdtDepositTx {
+  id              String               @id @default(cuid())
+  /** TronGrid transaction_id (on-chain hash) */
+  txHash          String               @unique
+  platformId      String
+  platform        Platform             @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /** USDT를 보낸 지갑 주소 (user.usdtWalletAddress 와 매칭) */
+  fromAddress     String
+  /** 정산 지갑 주소 (platform.settlementUsdtWallet) */
+  toAddress       String
+  /** 입금된 USDT 수량 */
+  usdtAmount      Decimal              @db.Decimal(18, 8)
+  /** 처리 시점 업비트 환율 (원/USDT) */
+  krwRate         Decimal              @db.Decimal(18, 2)
+  /** 환산 원화 금액 */
+  krwAmount       Decimal              @db.Decimal(18, 2)
+  status          UsdtDepositTxStatus
+  /** 매칭된 유저 (UNMATCHED이면 null) */
+  userId          String?
+  user            User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /** 생성된 WalletRequest */
+  walletRequestId String?              @unique
+  walletRequest   WalletRequest?       @relation(fields: [walletRequestId], references: [id], onDelete: SetNull)
+  /** 온체인 블록 타임스탬프 */
+  blockTimestamp  DateTime?
+  /** 관리자 처리 메모 */
+  resolverNote    String?
+  createdAt       DateTime             @default(now())
+
+  @@index([platformId, status])
+  @@index([platformId, createdAt])
+  @@index([fromAddress])
+}
+
+/// 은행 웹발신 문자 수신 기록 (sms-ingest 서버가 적재)
+model BankSmsIngest {
+  id                      String               @id @default(cuid())
+  platformId              String?
+  platform                Platform?            @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  bodyHash                String               @unique
+  rawBody                 String               @db.Text
+  sender                  String?
+  recipientPhoneSnapshot  String?
+  parsedJson              Json?
+  status                  BankSmsIngestStatus
+  failureReason           String?
+  matchedWalletRequestId  String?
+  matchedWalletRequest    WalletRequest?       @relation(fields: [matchedWalletRequestId], references: [id], onDelete: SetNull)
+  /** 수신 단말 번호가 반가상 등록 수신번호와 일치해 이 플랫폼(기기)에 귀속된 경우 */
+  semiVirtualDeviceMatch  Boolean              @default(false)
+  createdAt               DateTime             @default(now())
+
+  @@index([platformId, createdAt])
+  @@index([platformId, semiVirtualDeviceMatch, createdAt])
+}
+
+/// 총판(MASTER_AGENT) → 플랫폼 관리자 1:1 문의
+model AgentInquiry {
+  id                String             @id @default(cuid())
+  platformId        String
+  platform          Platform           @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  agentUserId       String
+  agent             User               @relation("AgentInquiryAuthor", fields: [agentUserId], references: [id], onDelete: Cascade)
+  subject           String
+  body              String             @db.Text
+  status            AgentInquiryStatus @default(OPEN)
+  adminReply        String?            @db.Text
+  repliedAt         DateTime?
+  repliedByUserId   String?
+  repliedBy         User?              @relation("AgentInquiryReplier", fields: [repliedByUserId], references: [id], onDelete: SetNull)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([platformId, status])
+  @@index([platformId, createdAt])
+  @@index([agentUserId, createdAt])
+}
+
+/// HQ가 상위 벤더(알값 공급처)에 직접 충전한 내역
+model HqVendorDeposit {
+  id              String   @id @default(cuid())
+  /// 충전 금액 (KRW)
+  amountKrw       Decimal  @db.Decimal(18, 2)
+  /// 메모 (ex: "4월 1차 선충전", 은행 이체 확인번호 등)
+  note            String?
+  createdAt       DateTime @default(now())
+  createdByUserId String?
+
+  @@index([createdAt])
+}
+
+/// 하위 플랫폼이 HQ에 알값 크레딧 충전을 요청하는 내역
+model PlatformCreditRequest {
+  id               String    @id @default(cuid())
+  platformId       String
+  platform         Platform  @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /// 요청 금액 (KRW)
+  requestedAmountKrw Decimal @db.Decimal(18, 2)
+  /// 요청자 메모 (플랫폼 어드민 작성)
+  requesterNote    String?
+  /// 상태: PENDING | APPROVED | REJECTED
+  status           String    @default("PENDING")
+  /// 승인된 금액 (승인 시 기입)
+  approvedAmountKrw Decimal? @db.Decimal(18, 2)
+  /// 관리자 처리 메모
+  adminNote        String?
+  resolvedAt       DateTime?
+  resolvedByUserId String?
+  createdAt        DateTime  @default(now())
+
+  @@index([platformId, status])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+/**
+ * 플랫폼 알(크레딧) 잔액 변동 로그.
+ * 실제 돈 이동과 무관한 관리자용 "가상 잔액" 이벤트 기록.
+ * type = DEDUCT (유저 낙첨 시 차감) | RESTORE (유저 승리 시 가상 복구) | ADJUST (수동 보정)
+ * 같은 bet result 이벤트가 중복 수신돼도 eventKey 로 멱등 처리한다.
+ */
+model PlatformReserveLog {
+  id             String   @id @default(cuid())
+  platformId     String
+  platform       Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  /// DEDUCT | RESTORE | ADJUST | ROLLBACK
+  type           String   @db.VarChar(16)
+  /// user_loss_amount 또는 user_win_amount (원금 기준)
+  baseAmount     Decimal  @db.Decimal(18, 2)
+  /// 적용된 알 비율 (예: 0.0700)
+  rate           Decimal  @db.Decimal(8, 4)
+  /// 이론 변동액 (baseAmount * rate, 클램프 전)
+  computedAmount Decimal  @db.Decimal(18, 2)
+  /// 실제 적용된 변동액 (잔액 상/하한 클램프 반영 후)
+  changedAmount  Decimal  @db.Decimal(18, 2)
+  balanceBefore  Decimal  @db.Decimal(18, 2)
+  balanceAfter   Decimal  @db.Decimal(18, 2)
+  initialAmount  Decimal  @db.Decimal(18, 2)
+  relatedUserId  String?
+  relatedGameId  String?
+  relatedBetId   String?
+  /// 같은 베팅 결과 이벤트의 중복 수신 방지용 멱등 키
+  eventKey       String?  @unique @db.VarChar(128)
+  note           String?  @db.Text
+  createdByUserId String?
+  createdAt      DateTime @default(now())
+
+  @@index([platformId, createdAt])
+  @@index([platformId, type, createdAt])
+  @@index([relatedBetId])
+}

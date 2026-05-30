@@ -1,0 +1,267 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "NoonnuBasicGothic";
+  src: url("/font/NoonnuBasicGothicRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "LABDigital";
+  src: url("/font/LAB_digital.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --phi: 1.618;
+  /* 헤더·드로어 로고: px 고정 — 모든 브라우저에서 동일 박스 (크롬/사파리 flex·baseline 차이 최소화) */
+  --site-header-logo-h: 52px;
+  --site-header-logo-max-w: 260px;
+  --app-mobile-header: 5rem; /* h-20, 모바일 헤더 */
+  --app-desktop-header: 7.5rem;
+  --app-mobile-nav: 3.5rem; /* h-14 */
+  --app-mobile-nav-safe: env(safe-area-inset-bottom, 0px);
+  --app-mobile-nav-total: calc(var(--app-mobile-nav) + var(--app-mobile-nav-safe));
+  --theme-primary: #daae57;
+  --gold-gradient: linear-gradient(
+    180deg,
+    #fff1c2 0%,
+    #daae57 40%,
+    #b48037 100%
+  );
+  --background: #0a0a0e;
+  /* 본문: 살짝 따뜻한 톤 (그라데이션 악센트와 조화) */
+  --foreground: #f2ead8;
+  --content-pad-phi: clamp(
+    0.75rem,
+    calc((100vw - min(100vw, 42rem)) / (2 * var(--phi))),
+    2.618rem
+  );
+}
+
+/* 헤더·드로어 로고: 한 클래스로 크기 고정 (Next/Image·flex 안에서도 동일) */
+.site-header-logo-img {
+  display: block;
+  box-sizing: border-box;
+  width: auto;
+  height: var(--site-header-logo-h);
+  max-height: var(--site-header-logo-h);
+  max-width: var(--site-header-logo-max-w);
+  min-width: 0;
+  object-fit: contain;
+  object-position: center center;
+  flex-shrink: 0;
+}
+.site-header-logo-img--left {
+  object-position: left center;
+}
+
+/* 메인 골드 그라데이션 텍스트 + 글로우
+   - background-clip:text + 눈누만 지정 시 모바일 WebKit에서 라틴(A–Z)이 안 보이는 경우가 있어
+     Geist(라틴) → Noonnu(한글) 순으로 글리프 매칭 */
+.text-main-gold {
+  font-family: var(--font-geist-sans), "NoonnuBasicGothic", ui-sans-serif, system-ui,
+    sans-serif;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 0 6px rgba(218, 174, 87, 0.8));
+}
+
+/* 그라데이션을 쓰기 어려운 곳(배지 등)용 단색 + 글로우 */
+.text-main-gold-solid {
+  color: #daae57;
+  text-shadow: 0 0 8px rgba(218, 174, 87, 0.45);
+}
+
+/* 하단 플레이 버튼 탭 시 한 바퀴 */
+@keyframes play-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.play-button-spin {
+  animation: play-button-spin 0.65s ease-in-out;
+}
+
+/* 시그니처 CTA·칩 배경 (로그인/입금 등) */
+.bg-gold-gradient {
+  background: var(--gold-gradient);
+  color: #0f0f12;
+}
+
+.bg-gold-gradient:hover {
+  filter: brightness(1.06);
+}
+
+/* 반투명 배경 + 골드 테두리 (칩·탭) */
+.bg-gold-muted {
+  background: rgba(218, 174, 87, 0.12);
+  border-color: rgba(218, 174, 87, 0.45);
+}
+
+.ring-gold {
+  --tw-ring-color: rgba(218, 174, 87, 0.35);
+}
+
+.shadow-gold-glow {
+  box-shadow: 0 0 12px rgba(218, 174, 87, 0.28);
+}
+
+/*
+  모바일: 문서 전체 스크롤 대신 헤더·하단 탭 사이 <main>만 스크롤.
+  풀스크린 높이는 100svh 로 통일 (dvh·vh 혼용 시 크롬/사파리·iOS에서 높이가 달라 보일 수 있음).
+*/
+@media (max-width: 767px) {
+  .app-main-mobile-scroll {
+    height: 100svh;
+    max-height: 100svh;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 카지노·슬롯 본문 좌우 여백 (--content-pad-phi) */
+.content-pad-phi {
+  padding-left: var(--content-pad-phi);
+  padding-right: var(--content-pad-phi);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "NoonnuBasicGothic", var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "NoonnuBasicGothic", var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* 데스크톱에서 base font-size를 올려 전체 텍스트 크기 상향 (로고는 --site-header-logo-* px로 영향 없음) */
+@media (min-width: 768px) {
+  html {
+    font-size: 112%;
+  }
+  :root {
+    --site-header-logo-h: 56px;
+    --site-header-logo-max-w: 360px;
+    --app-desktop-header: 7.75rem;
+  }
+}
+@media (min-width: 1280px) {
+  html { font-size: 118%; }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes slideUpCard {
+  from { opacity: 0; transform: translateY(16px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes billboard-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes billboard-flicker {
+  0%, 18%, 22%, 62%, 66%, 100% {
+    opacity: 1;
+    filter: brightness(1) saturate(1.1);
+  }
+  20%, 64% {
+    opacity: 0.86;
+    filter: brightness(1.28) saturate(1.4);
+  }
+}
+
+.billboard-banner {
+  position: relative;
+  overflow: hidden;
+  border-top: 2px solid rgba(255, 232, 122, 0.78);
+  border-bottom: 2px solid rgba(255, 232, 122, 0.58);
+  background: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 184, 0.24),
+    inset 0 -1px 0 rgba(255, 248, 184, 0.16);
+}
+
+.billboard-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 247, 186, 0.12), transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.billboard-marquee {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  animation: billboard-marquee 18s linear infinite;
+  will-change: transform;
+}
+
+.billboard-segment {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.78rem 1.25rem;
+}
+
+.billboard-font {
+  font-family: "LABDigital", var(--font-geist-mono), monospace;
+}
+
+.billboard-arrow,
+.billboard-text,
+.billboard-separator {
+  color: #fff07d;
+  text-shadow:
+    0 0 6px rgba(255, 233, 114, 0.95),
+    0 0 12px rgba(255, 214, 59, 0.72),
+    0 0 24px rgba(255, 214, 59, 0.38);
+  animation: billboard-flicker 1.8s steps(2, end) infinite;
+}
+
+.billboard-arrow {
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+}
+
+.billboard-text {
+  font-size: clamp(0.88rem, 0.75rem + 0.25vw, 1rem);
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+
+.billboard-separator {
+  color: #ffd54d;
+  font-size: 0.85rem;
+}
