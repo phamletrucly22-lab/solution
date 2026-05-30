@@ -2,12 +2,15 @@
 # pnpm dev:all 실행 후 로컬 주소 안내
 printf '%s\n' \
   "" \
-  "  로컬 주소 (pnpm dev:* 또는 빌드 뒤 pnpm start:* / apps/*/out 정적 서빙, 동일 포트)" \
+  "  로컬 주소 (pnpm dev:all — 프론트만, API는 메인 서버 apisgate.org)" \
   "  ─────────────────────────────" \
-  "  관리자(플랫폼)  http://localhost:3000  (nginx mod 호스트와 동일 포트)" \
+  "  슈퍼어드민      http://localhost:3000" \
+  "  솔루션 어드민    http://localhost:3001" \
   "  솔루션(유저)    http://localhost:3002" \
   "  총판 관리       http://localhost:3003  ← 로그인: 총판(MASTER_AGENT)" \
-  "  스테이킹        http://localhost:3016" \
-  "  API             http://localhost:4001  (health: /health, REST: /api/...)" \
-  "  sms-ingest      http://localhost:4050  (+ 터널은 터미널 로그 참고)" \
+  "  솔루션 메인     http://localhost:3010" \
+  "  API (원격)      https://apisgate.org/api  ← Docker / pnpm dev:api 불필요" \
+  "" \
+  "  로컬 API+DB+SMS 필요 시:  pnpm dev:all:local" \
+  "  스테이킹만 로컬:          pnpm dev:staking  (별도 SQLite)" \
   ""

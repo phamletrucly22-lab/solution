@@ -22,7 +22,8 @@ printf '%s\n' \
   "  (선택)     SMS 수집       pnpm dev:sms-ingest" \
   "" \
   "  한 창에 전부(개발·로그 섞임):    pnpm dev:parallel" \
-  "  API+터널·sms 올인원:            pnpm dev:all" \
+  "  프론트 올인원(원격 API):        pnpm dev:all" \
+  "  로컬 API+DB+SMS 올인원:         pnpm dev:all:local" \
   "" \
   "  빌드 후 정적 서빙(out/ + serve): 먼저  pnpm build:apps" \
   "  ─────────────────────────────────────────────────────────────" \
